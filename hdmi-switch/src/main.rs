@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
-use std::process;
 use structopt::StructOpt;
 use telnet::Telnet;
+use std::error::Error;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hdmi-switch", about = "Cli client for 4KMX44-H2")]
@@ -36,19 +36,14 @@ struct Configuration {
     host: String,
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
 
     let configuration_file_path: String = opt
         .get_file_path()
         .expect("unable to find configuration file");
-    let configuration = match get_configuration(configuration_file_path) {
-        Ok(configuration) => configuration,
-        Err(error) => {
-            eprintln!("{}", error);
-            process::exit(1);
-        }
-    };
+
+    let configuration = get_configuration(configuration_file_path)?;
 
     let mut telnet =
         Telnet::connect((configuration.host, 23), 256).expect("Couldn't connect to the server...");
@@ -57,16 +52,12 @@ fn main() {
         .read()
         .expect("Error reading connection response from HDMI switch");
 
-    let buffer: String = match command_build(opt.input, opt.output) {
-        Ok(command) => command,
-        Err(error) => {
-            eprintln!("{}", error);
-            process::exit(1);
-        }
-    };
+    let buffer: String = command_build(opt.input, opt.output)?;
     telnet
         .write(&buffer.as_bytes())
         .expect("Error sending command to HDMI switch");
+
+    Ok(())
 }
 
 fn command_build(input: String, output: String) -> Result<String, String> {
@@ -76,6 +67,7 @@ fn command_build(input: String, output: String) -> Result<String, String> {
         "switch" => "hdmiin3",
         "work" => "hdmiin4",
         v => {
+            // TODO make this a std::error::Error
             return Err(String::from(format!("Input {} not supported", v)));
         }
     };
@@ -84,6 +76,7 @@ fn command_build(input: String, output: String) -> Result<String, String> {
         "tv" => "hdmiout2",
         "all" => "all",
         v => {
+            // TODO make this a std::error::Error
             return Err(String::from(format!("Output {} not supported", v)));
         }
     };
@@ -92,16 +85,9 @@ fn command_build(input: String, output: String) -> Result<String, String> {
     return Ok(command);
 }
 
-fn get_configuration(file_path: String) -> Result<Configuration, String> {
-    let contents = match fs::read_to_string(file_path.as_str()) {
-        Ok(contents) => contents,
-        Err(error) => return Err(format!("{}: {}", error, file_path)),
-    };
-
-    let configuration: Configuration = match serde_yaml::from_str(contents.as_str()) {
-        Ok(configuration) => configuration,
-        Err(error) => return Err(error.to_string()),
-    };
+fn get_configuration(file_path: String) -> Result<Configuration, Box<dyn Error>> {
+    let contents = fs::read_to_string(file_path.as_str())?;
+    let configuration: Configuration = serde_yaml::from_str(contents.as_str())?;
 
     return Ok(configuration);
 }
