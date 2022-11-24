@@ -17,14 +17,11 @@ struct Opt {
 }
 
 impl Opt {
-    fn get_file_path(&self) -> Result<String, String> {
+    fn get_file_path(&self) -> Result<String, Box<dyn Error>> {
         let mut configuration: String = self.configuration.clone();
         if configuration == "" {
-            let home = match env::var("HOME") {
-                Ok(home) => home,
-                Err(error) => return Err(error.to_string()),
-            };
-            configuration = String::from(format!("{}/.config/hdmi-switch/configuration.yaml", home))
+            let home = env::var("HOME")?;
+            configuration = format!("{}/.config/hdmi-switch/configuration.yaml", home)
         }
 
         return Ok(configuration);
@@ -68,7 +65,7 @@ fn command_build(input: String, output: String) -> Result<String, String> {
         "work" => "hdmiin4",
         v => {
             // TODO make this a std::error::Error
-            return Err(String::from(format!("Input {} not supported", v)));
+            return Err(format!("Input {} not supported", v));
         }
     };
     let output = match output.as_str() {
@@ -77,11 +74,12 @@ fn command_build(input: String, output: String) -> Result<String, String> {
         "all" => "all",
         v => {
             // TODO make this a std::error::Error
-            return Err(String::from(format!("Output {} not supported", v)));
+            return Err(format!("Output {} not supported", v));
         }
     };
 
-    let command: String = String::from(format!("SET SW {} {}\n\r", input, output));
+    // let command: String = String::from(format!("SET SW {} {}\n\r", input, output));
+    let command: String = format!("SET SW {} {}\n\r", input, output);
     return Ok(command);
 }
 
