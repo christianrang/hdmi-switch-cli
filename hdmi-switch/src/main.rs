@@ -4,6 +4,7 @@ use std::fs;
 use structopt::StructOpt;
 use telnet::Telnet;
 use std::error::Error;
+use std::collections::HashMap;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hdmi-switch", about = "Cli client for 4KMX44-H2")]
@@ -58,29 +59,46 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn command_build(input: String, output: String) -> Result<String, String> {
-    let input = match input.as_str() {
-        "pc" => "hdmiin1",
-        "ps" => "hdmiin2",
-        "switch" => "hdmiin3",
-        "work" => "hdmiin4",
-        "hdmiin1" => "hdmiin1",
-        "hdmiin2" => "hdmiin2",
-        "hdmiin3" => "hdmiin3",
-        "hdmiin4" => "hdmiin4",
-        v => {
-            return Err(format!("Input {} not supported", v));
+    let mut configured_inputs: HashMap<String, String> = HashMap::new();
+    let mut default_inputs: HashMap<String, String> = HashMap::new();
+
+    // Set defaults
+    default_inputs.insert("hdmiin1".to_string(), "hdmiin1".to_string());
+    default_inputs.insert("hdmiin2".to_string(), "hdmiin2".to_string());
+    default_inputs.insert("hdmiin3".to_string(), "hdmiin3".to_string());
+    default_inputs.insert("hdmiin4".to_string(), "hdmiin4".to_string());
+
+    // Set aliases
+    configured_inputs.insert("pc".to_string(), "hdmiin1".to_string());
+    configured_inputs.insert("ps".to_string(), "hdmiin2".to_string());
+    configured_inputs.insert("switch".to_string(), "hdmiin3".to_string());
+    configured_inputs.insert("work".to_string(), "hdmiin4".to_string());
+    configured_inputs.extend(default_inputs);
+
+    let input = match configured_inputs.get(&input){ 
+        Some(value) => value,
+        _ => {
+            return Err(format!("Input {} not supported", input));
         }
     };
-    let output = match output.as_str() {
-        "pc" => "hdmiout1",
-        "tv" => "hdmiout2",
-        "hdmiout1" => "hdmiout1",
-        "hdmiout2" => "hdmiout2",
-        "hdmiout3" => "hdmiout3",
-        "hdmiout4" => "hdmiout4",
-        "all" => "all",
-        v => {
-            return Err(format!("Output {} not supported", v));
+
+    let mut configured_outputs: HashMap<String, String> = HashMap::new();
+    let mut default_outputs: HashMap<String, String> = HashMap::new();
+
+    // Set defaults
+    default_outputs.insert("hdmiout1".to_string(), "hdmiout1".to_string());
+    default_outputs.insert("hdmiout2".to_string(), "hdmiout2".to_string());
+    default_outputs.insert("hdmiout3".to_string(), "hdmiout3".to_string());
+    default_outputs.insert("hdmiout4".to_string(), "hdmiout4".to_string());
+
+    configured_outputs.insert("pc".to_string(), "hdmiout1".to_string());
+    configured_outputs.insert("tv".to_string(), "hdmiout2".to_string());
+    configured_outputs.extend(default_outputs);
+
+    let output = match configured_outputs.get(&output){ 
+        Some(value) => value,
+        _ => {
+            return Err(format!("Output {} not supported", output));
         }
     };
 
