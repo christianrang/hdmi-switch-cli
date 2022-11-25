@@ -63,17 +63,23 @@ fn command_build(input: String, output: String) -> Result<String, String> {
         "ps" => "hdmiin2",
         "switch" => "hdmiin3",
         "work" => "hdmiin4",
+        "hdmiin1" => "hdmiin1",
+        "hdmiin2" => "hdmiin2",
+        "hdmiin3" => "hdmiin3",
+        "hdmiin4" => "hdmiin4",
         v => {
-            // TODO make this a std::error::Error
             return Err(format!("Input {} not supported", v));
         }
     };
     let output = match output.as_str() {
         "pc" => "hdmiout1",
         "tv" => "hdmiout2",
+        "hdmiout1" => "hdmiout1",
+        "hdmiout2" => "hdmiout2",
+        "hdmiout3" => "hdmiout3",
+        "hdmiout4" => "hdmiout4",
         "all" => "all",
         v => {
-            // TODO make this a std::error::Error
             return Err(format!("Output {} not supported", v));
         }
     };
