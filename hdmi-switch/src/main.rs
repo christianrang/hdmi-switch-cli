@@ -31,7 +31,24 @@ impl Opt {
 
 #[derive(Serialize, Deserialize)]
 struct Configuration {
+    server: ServerConfiguration,
+}
+
+#[derive(Serialize, Deserialize)]
+struct ServerConfiguration {
     host: String,
+    port: Option<u16>,
+}
+
+impl Configuration {
+    fn get_port(&self) -> Result<u16, Box<dyn Error>> {
+        let port = match self.server.port {
+            Some(port) => port,
+            _ => 23,
+        };
+        
+        return Ok(port);
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -43,8 +60,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let configuration = get_configuration(configuration_file_path)?;
 
+    let port = configuration.get_port()?;
+
     let mut telnet =
-        Telnet::connect((configuration.host, 23), 256).expect("Couldn't connect to the server...");
+        Telnet::connect((configuration.server.host, port), 256).expect("Couldn't connect to the server...");
 
     let _event = telnet
         .read()

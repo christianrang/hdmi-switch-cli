@@ -17,7 +17,9 @@ file path can be set using the `-c` flag.
 Example configuration:
 ```yaml
 # Host supports FDQN or IPv4. IPv6 is untested.
-host: 127.0.0.1
+server:
+  host: 127.0.0.1
+  port: 23 # Optional this field will default to 23
 ```
 
 ### Reference
