@@ -1,10 +1,10 @@
-use serde::{Deserialize, Serialize};
+mod configuration;
+mod utils;
+
 use std::env;
-use std::fs;
+use std::error::Error;
 use structopt::StructOpt;
 use telnet::Telnet;
-use std::error::Error;
-use std::collections::HashMap;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hdmi-switch", about = "Cli client for 4KMX44-H2")]
@@ -29,106 +29,43 @@ impl Opt {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-struct Configuration {
-    server: ServerConfiguration,
-}
-
-#[derive(Serialize, Deserialize)]
-struct ServerConfiguration {
-    host: String,
-    port: Option<u16>,
-}
-
-impl Configuration {
-    fn get_port(&self) -> Result<u16, Box<dyn Error>> {
-        let port = match self.server.port {
-            Some(port) => port,
-            _ => 23,
-        };
-        
-        return Ok(port);
-    }
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
+
+    let mut switch = utils::Switch::new();
+    switch.load_input_aliases(vec![
+        ("pc", "hdmiin1"),
+        ("ps", "hdmiin2"),
+        ("switch", "hdmiin3"),
+        ("work", "hdmiin4"),
+    ])?;
+
+    switch.load_output_alias("pc", "hdmiout1");
+    switch.load_output_alias("tv", "hdmiout2");
+    switch.load_output_aliases(vec![
+        ("pc", "hdmiout1"),
+        ("tv", "hdmiout2"),
+    ]);
 
     let configuration_file_path: String = opt
         .get_file_path()
         .expect("unable to find configuration file");
 
-    let configuration = get_configuration(configuration_file_path)?;
+    let configuration = configuration::get_configuration(configuration_file_path)?;
 
     let port = configuration.get_port()?;
 
-    let mut telnet =
-        Telnet::connect((configuration.server.host, port), 256).expect("Couldn't connect to the server...");
+    let mut telnet = Telnet::connect((configuration.server.host, port), 256)
+        .expect("Couldn't connect to the server...");
 
     let _event = telnet
         .read()
         .expect("Error reading connection response from HDMI switch");
 
-    let buffer: String = command_build(opt.input, opt.output)?;
+    let buffer: String = switch.command_build(opt.input, opt.output)?;
     telnet
         .write(&buffer.as_bytes())
         .expect("Error sending command to HDMI switch");
 
     Ok(())
-}
-
-fn command_build(input: String, output: String) -> Result<String, String> {
-    let mut configured_inputs: HashMap<String, String> = HashMap::new();
-    let mut default_inputs: HashMap<String, String> = HashMap::new();
-
-    // Set defaults
-    default_inputs.insert("hdmiin1".to_string(), "hdmiin1".to_string());
-    default_inputs.insert("hdmiin2".to_string(), "hdmiin2".to_string());
-    default_inputs.insert("hdmiin3".to_string(), "hdmiin3".to_string());
-    default_inputs.insert("hdmiin4".to_string(), "hdmiin4".to_string());
-
-    // Set aliases
-    configured_inputs.insert("pc".to_string(), "hdmiin1".to_string());
-    configured_inputs.insert("ps".to_string(), "hdmiin2".to_string());
-    configured_inputs.insert("switch".to_string(), "hdmiin3".to_string());
-    configured_inputs.insert("work".to_string(), "hdmiin4".to_string());
-    configured_inputs.extend(default_inputs);
-
-    let input = match configured_inputs.get(&input){ 
-        Some(value) => value,
-        _ => {
-            return Err(format!("Input {} not supported", input));
-        }
-    };
-
-    let mut configured_outputs: HashMap<String, String> = HashMap::new();
-    let mut default_outputs: HashMap<String, String> = HashMap::new();
-
-    // Set defaults
-    default_outputs.insert("hdmiout1".to_string(), "hdmiout1".to_string());
-    default_outputs.insert("hdmiout2".to_string(), "hdmiout2".to_string());
-    default_outputs.insert("hdmiout3".to_string(), "hdmiout3".to_string());
-    default_outputs.insert("hdmiout4".to_string(), "hdmiout4".to_string());
-
-    configured_outputs.insert("pc".to_string(), "hdmiout1".to_string());
-    configured_outputs.insert("tv".to_string(), "hdmiout2".to_string());
-    configured_outputs.extend(default_outputs);
-
-    let output = match configured_outputs.get(&output){ 
-        Some(value) => value,
-        _ => {
-            return Err(format!("Output {} not supported", output));
-        }
-    };
-
-    // let command: String = String::from(format!("SET SW {} {}\n\r", input, output));
-    let command: String = format!("SET SW {} {}\n\r", input, output);
-    return Ok(command);
-}
-
-fn get_configuration(file_path: String) -> Result<Configuration, Box<dyn Error>> {
-    let contents = fs::read_to_string(file_path.as_str())?;
-    let configuration: Configuration = serde_yaml::from_str(contents.as_str())?;
-
-    return Ok(configuration);
 }
