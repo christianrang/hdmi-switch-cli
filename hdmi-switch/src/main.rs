@@ -32,26 +32,21 @@ impl Opt {
 fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
 
-    let mut switch = utils::Switch::new();
-    switch.load_input_aliases(vec![
-        ("pc", "hdmiin1"),
-        ("ps", "hdmiin2"),
-        ("switch", "hdmiin3"),
-        ("work", "hdmiin4"),
-    ])?;
-
-    switch.load_output_alias("pc", "hdmiout1");
-    switch.load_output_alias("tv", "hdmiout2");
-    switch.load_output_aliases(vec![
-        ("pc", "hdmiout1"),
-        ("tv", "hdmiout2"),
-    ]);
-
     let configuration_file_path: String = opt
         .get_file_path()
         .expect("unable to find configuration file");
 
     let configuration = configuration::get_configuration(configuration_file_path)?;
+
+    let mut switch = utils::Switch::new();
+
+    for (alias, default) in configuration.input.aliases.iter() {
+        switch.load_input_alias(&alias, &default)?;
+    };
+    
+    for (alias, default) in configuration.output.aliases.iter() {
+        switch.load_output_alias(&alias, &default)?;
+    }
 
     let port = configuration.get_port()?;
 

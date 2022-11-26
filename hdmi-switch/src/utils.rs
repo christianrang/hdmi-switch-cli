@@ -63,60 +63,67 @@ impl Switch {
             true => {
                 self.input_aliases
                     .insert(alias.to_string(), default.to_string());
-                return Ok(())
+                return Ok(());
             }
             false => {
                 return Err(format!("Input {} is not a supported input.", default));
             }
         };
     }
-    // Accepts a vector of aliases. Vector is expected to be a tuple of (alias, default)
+    /// Accepts a vector of aliases. Vector is expected to be a tuple of (alias, default)
     pub fn load_input_aliases(&mut self, aliases: Vec<(&str, &str)>) -> Result<(), Box<dyn Error>> {
         for (alias, default) in aliases.iter() {
             self.load_input_alias(alias, default)?;
         }
-        return Ok(())
+        return Ok(());
     }
 
-    pub fn load_output_alias(&mut self, alias: &str, default: &str) {
+    pub fn load_output_alias(&mut self, alias: &str, default: &str) -> Result<(), String> {
+        match is_valid_output(default) {
+            true => {
         self.output_aliases
             .insert(alias.to_string(), default.to_string());
+                return Ok(());
+            }
+            false => {
+                return Err(format!("Output {} is not a supported output.", default));
+            }
+        };
     }
-
-    pub fn load_output_aliases(&mut self, aliases: Vec<(&str, &str)>) {
+    /// Accepts a vector of aliases. Vector is expected to be a tuple of (alias, default)
+    pub fn load_output_aliases(&mut self, aliases: Vec<(&str, &str)>) -> Result<(), Box<dyn Error>>{
         for (alias, default) in aliases.iter() {
-            self.load_output_alias(alias, default);
+            self.load_output_alias(alias, default)?;
         }
+        return Ok(());
     }
+    pub fn command_build(self, input: String, output: String) -> Result<String, String> {
+        let mut inputs: IndexMap<String, String> = IndexMap::new();
+        let mut outputs: IndexMap<String, String> = IndexMap::new();
 
-pub fn command_build(self, input: String, output: String) -> Result<String, String> {
-    let mut inputs: IndexMap<String, String> = IndexMap::new();
-    let mut outputs: IndexMap<String, String> = IndexMap::new();
+        inputs.extend(self.input_defaults);
+        inputs.extend(self.input_aliases);
 
-    inputs.extend(self.input_defaults);
-    inputs.extend(self.input_aliases);
+        let input = match inputs.get(&input) {
+            Some(value) => value,
+            _ => {
+                return Err(format!("Input {} not supported", input));
+            }
+        };
 
-    let input = match inputs.get(&input) {
-        Some(value) => value,
-        _ => {
-            return Err(format!("Input {} not supported", input));
-        }
-    };
+        outputs.extend(self.output_defaults);
+        outputs.extend(self.output_aliases);
 
-    outputs.extend(self.output_defaults);
-    outputs.extend(self.output_aliases);
+        let output = match outputs.get(&output) {
+            Some(value) => value,
+            _ => {
+                return Err(format!("Output {} not supported", output));
+            }
+        };
 
-    let output = match outputs.get(&output) {
-        Some(value) => value,
-        _ => {
-            return Err(format!("Output {} not supported", output));
-        }
-    };
-
-    // let command: String = String::from(format!("SET SW {} {}\n\r", input, output));
-    let command: String = format!("SET SW {} {}\n\r", input, output);
-    return Ok(command);
-}
+        let command: String = format!("SET SW {} {}\n\r", input, output);
+        return Ok(command);
+    }
 }
 
 fn is_valid_input(input: &str) -> bool {
@@ -125,6 +132,16 @@ fn is_valid_input(input: &str) -> bool {
         "hdmiin2" => return true,
         "hdmiin3" => return true,
         "hdmiin4" => return true,
+        _v => return false,
+    }
+}
+
+fn is_valid_output(output: &str) -> bool {
+    match output {
+        "hdmiout1" => return true,
+        "hdmiout2" => return true,
+        "hdmiout3" => return true,
+        "hdmiout4" => return true,
         _v => return false,
     }
 }
