@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Configuration {
@@ -18,12 +18,12 @@ pub struct ServerConfiguration {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct InputConfiguration {
-    pub aliases: HashMap<String, String>
+    pub aliases: HashMap<String, String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct OutputConfiguration {
-    pub aliases: HashMap<String, String>
+    pub aliases: HashMap<String, String>,
 }
 
 impl Configuration {

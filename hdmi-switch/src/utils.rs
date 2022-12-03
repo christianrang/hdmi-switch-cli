@@ -81,8 +81,8 @@ impl Switch {
     pub fn load_output_alias(&mut self, alias: &str, default: &str) -> Result<(), String> {
         match is_valid_output(default) {
             true => {
-        self.output_aliases
-            .insert(alias.to_string(), default.to_string());
+                self.output_aliases
+                    .insert(alias.to_string(), default.to_string());
                 return Ok(());
             }
             false => {
@@ -91,7 +91,10 @@ impl Switch {
         };
     }
     /// Accepts a vector of aliases. Vector is expected to be a tuple of (alias, default)
-    pub fn load_output_aliases(&mut self, aliases: Vec<(&str, &str)>) -> Result<(), Box<dyn Error>>{
+    pub fn load_output_aliases(
+        &mut self,
+        aliases: Vec<(&str, &str)>,
+    ) -> Result<(), Box<dyn Error>> {
         for (alias, default) in aliases.iter() {
             self.load_output_alias(alias, default)?;
         }
@@ -126,6 +129,7 @@ impl Switch {
     }
 }
 
+// NOTE: should this return an error?
 fn is_valid_input(input: &str) -> bool {
     match input {
         "hdmiin1" => return true,
@@ -136,6 +140,7 @@ fn is_valid_input(input: &str) -> bool {
     }
 }
 
+// NOTE: should this return an error?
 fn is_valid_output(output: &str) -> bool {
     match output {
         "hdmiout1" => return true,

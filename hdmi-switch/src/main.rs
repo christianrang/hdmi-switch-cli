@@ -39,11 +39,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let configuration = configuration::get_configuration(configuration_file_path)?;
 
     let mut switch = utils::Switch::new();
-
     for (alias, default) in configuration.input.aliases.iter() {
         switch.load_input_alias(&alias, &default)?;
-    };
-    
+    }
+
     for (alias, default) in configuration.output.aliases.iter() {
         switch.load_output_alias(&alias, &default)?;
     }
