@@ -1,0 +1,28 @@
+server:
+  # Host name may also be a FQDN. IPv6 IP addresses have not been tested, but
+  # they do not appear to be supported by the HDMI switch either.
+  host: "10.10.10.10"
+input:
+  # Aliases can be arbitrary. If an alias is duplicated it will use the last one
+  # in the list. The second value in the alias must match what is supported by the
+  # HDMI switch API, see below:
+  # - hdmiin1
+  # - hdmiin2
+  # - hdmiin3
+  # - hdmiin4
+  aliases:
+    pc: hdmiin1
+    ps: hdmiin2
+    switch: hdmiin3
+    work: hdmiin4
+output:
+  # Aliases can be arbitrary. If an alias is duplicated it will use the last one
+  # in the list. The second value in the alias must match what is supported by the
+  # HDMI switch API, see below:
+  # - hdmiout1
+  # - hdmiout2
+  # - hdmiout3
+  # - hdmiout4
+  aliases:
+    pc: hdmiout1
+    tv: hdmiout4
