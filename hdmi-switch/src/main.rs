@@ -9,12 +9,11 @@ use telnet::Telnet;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hdmi-switch", about = "Cli client for 4KMX44-H2")]
 struct Opt {
-    #[structopt(short, long)]
-    input: String,
-    #[structopt(short, long)]
-    output: String,
     #[structopt(short, long, default_value = "")]
     configuration: String,
+
+    #[structopt(subcommand)]
+    cmd: Option<SubCommand>,
 }
 
 impl Opt {
@@ -29,7 +28,21 @@ impl Opt {
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[derive(Debug, StructOpt)]
+enum SubCommand {
+    Switch(SwitchOptions),
+    Ls{},
+}
+
+#[derive(Debug, StructOpt)]
+struct SwitchOptions {
+    #[structopt(short, long)]
+    input: String,
+    #[structopt(short, long)]
+    output: String,
+}
+
+fn main() -> Result<(), Box<dyn Error>> { 
     let opt = Opt::from_args();
 
     let configuration_file_path: String = opt
@@ -56,10 +69,22 @@ fn main() -> Result<(), Box<dyn Error>> {
         .read()
         .expect("Error reading connection response from HDMI switch");
 
-    let buffer: String = switch.command_build(opt.input, opt.output)?;
-    telnet
-        .write(&buffer.as_bytes())
-        .expect("Error sending command to HDMI switch");
 
+    match opt.cmd {
+        Some(SubCommand::Switch(switch_opts)) => {
+            let buffer: String = switch.command_build(switch_opts.input, switch_opts.output)?;
+
+            telnet
+                .write(&buffer.as_bytes())
+                .expect("Error sending command to HDMI switch");
+        },
+        Some(SubCommand::Ls {}) => {
+            switch.list_input_aliases();
+            switch.list_input_defaults();
+            switch.list_output_aliases();
+            switch.list_output_defaults();
+        },
+        None => eprintln!("No subcommand found. Please use -h for available subcommands"),
+    }
     Ok(())
 }
