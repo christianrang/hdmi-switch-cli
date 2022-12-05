@@ -27,13 +27,13 @@ pub struct OutputConfiguration {
 }
 
 impl Configuration {
-    pub fn get_port(&self) -> Result<u16, Box<dyn Error>> {
+    pub fn get_port(&self) -> u16 {
         let port = match self.server.port {
             Some(port) => port,
             _ => 23,
         };
 
-        return Ok(port);
+        return port;
     }
 }
 

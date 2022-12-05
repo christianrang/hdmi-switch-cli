@@ -26,12 +26,51 @@ impl Opt {
 
         return Ok(configuration);
     }
+
+    fn execute(self, configuration: configuration::Configuration) -> Result<(), String> {
+        let port = configuration.get_port();
+
+        let mut telnet = Telnet::connect((configuration.server.host, port), 256)
+            .expect("Couldn't connect to the server...");
+
+        let _event = telnet
+            .read()
+            .expect("Error reading connection response from HDMI switch");
+
+        let mut switch = utils::Switch::new();
+        for (alias, default) in configuration.input.aliases.iter() {
+            switch.load_input_alias(&alias, &default)?;
+        }
+        for (alias, default) in configuration.output.aliases.iter() {
+            switch.load_output_alias(&alias, &default)?;
+        }
+
+        match self.cmd {
+            Some(SubCommand::Switch(switch_opts)) => {
+                let buffer: String = switch.command_build(&switch_opts.input, &switch_opts.output)?;
+
+                telnet
+                    .write(&buffer.as_bytes())
+                    .expect("Error sending command to HDMI switch");
+            }
+            Some(SubCommand::Ls {}) => {
+                switch.list_input_aliases();
+                switch.list_input_defaults();
+                switch.list_output_aliases();
+                switch.list_output_defaults();
+            }
+            None => {
+                return Err("No subcommand found. Please use -h for available subcommands".to_string());
+            }
+        }
+        return Ok(());
+    }
 }
 
 #[derive(Debug, StructOpt)]
 enum SubCommand {
     Switch(SwitchOptions),
-    Ls{},
+    Ls {},
 }
 
 #[derive(Debug, StructOpt)]
@@ -42,7 +81,7 @@ struct SwitchOptions {
     output: String,
 }
 
-fn main() -> Result<(), Box<dyn Error>> { 
+fn main() -> Result<(), Box<dyn Error>> {
     let opt = Opt::from_args();
 
     let configuration_file_path: String = opt
@@ -51,40 +90,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let configuration = configuration::get_configuration(configuration_file_path)?;
 
-    let mut switch = utils::Switch::new();
-    for (alias, default) in configuration.input.aliases.iter() {
-        switch.load_input_alias(&alias, &default)?;
-    }
+    opt.execute(configuration)?;
 
-    for (alias, default) in configuration.output.aliases.iter() {
-        switch.load_output_alias(&alias, &default)?;
-    }
-
-    let port = configuration.get_port()?;
-
-    let mut telnet = Telnet::connect((configuration.server.host, port), 256)
-        .expect("Couldn't connect to the server...");
-
-    let _event = telnet
-        .read()
-        .expect("Error reading connection response from HDMI switch");
-
-
-    match opt.cmd {
-        Some(SubCommand::Switch(switch_opts)) => {
-            let buffer: String = switch.command_build(switch_opts.input, switch_opts.output)?;
-
-            telnet
-                .write(&buffer.as_bytes())
-                .expect("Error sending command to HDMI switch");
-        },
-        Some(SubCommand::Ls {}) => {
-            switch.list_input_aliases();
-            switch.list_input_defaults();
-            switch.list_output_aliases();
-            switch.list_output_defaults();
-        },
-        None => eprintln!("No subcommand found. Please use -h for available subcommands"),
-    }
     Ok(())
 }
