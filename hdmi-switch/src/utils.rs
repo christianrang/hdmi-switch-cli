@@ -6,6 +6,8 @@ pub struct Switch {
 
     output_defaults: IndexMap<String, String>,
     output_aliases: IndexMap<String, String>,
+
+    longest_str: usize
 }
 
 impl Switch {
@@ -27,32 +29,97 @@ impl Switch {
                 ("all".to_string(), "all".to_string()),
             ]),
             output_aliases: IndexMap::new(),
+            longest_str: 0,
         };
         return switch;
     }
 
-    pub fn list_input_defaults(&self) {
-        println!("Input Defaults:");
+    pub fn longest_input_output_key(&mut self) -> usize {
+        for (key, _value) in self.input_defaults.iter() {
+            if key.len() > self.longest_str {
+                self.longest_str = key.len()
+            }
+        }
+
+        for (key, _value) in self.input_aliases.iter() {
+            if key.len() > self.longest_str {
+                self.longest_str = key.len()
+            }
+        }
+
+        for (key, _value) in self.output_defaults.iter() {
+            if key.len() > self.longest_str {
+                self.longest_str = key.len()
+            }
+        }
+
+        for (key, _value) in self.output_aliases.iter() {
+            if key.len() > self.longest_str {
+                self.longest_str = key.len()
+            }
+        }
+
+        return self.longest_str;
+    }
+
+    pub fn list_input_defaults(&mut self) {
+        if self.longest_str == 0 {
+            self.longest_input_output_key();
+        }
+
+        println!("  Input Defaults:");
         for (key, value) in self.input_defaults.iter() {
-            println!("  {}: {}", key, value);
+            let spacer_len = self.longest_str - key.len();
+            let mut spacer_string: String = String::new();
+            for _ in 0..spacer_len {
+                spacer_string.push_str(" ")
+            }
+            println!("    {key}: {spacer_string}{value}");
         }
     }
-    pub fn list_input_aliases(&self) {
-        println!("Input aliases:");
+    pub fn list_input_aliases(&mut self) {
+        if self.longest_str == 0 {
+            self.longest_input_output_key();
+        }
+
+        println!("  Input aliases:");
         for (key, value) in self.input_aliases.iter() {
-            println!("  {}: {}", key, value);
+            let spacer_len = self.longest_str - key.len();
+            let mut spacer_string: String = String::new();
+            for _ in 0..spacer_len {
+                spacer_string.push_str(" ")
+            }
+            println!("    {key}: {spacer_string}{value}");
         }
     }
-    pub fn list_output_defaults(&self) {
-        println!("Output Defaults:");
+    pub fn list_output_defaults(&mut self) {
+        if self.longest_str == 0 {
+            self.longest_input_output_key();
+        }
+
+        println!("  Output Defaults:");
         for (key, value) in self.output_defaults.iter() {
-            println!("  {}: {}", key, value);
+            let spacer_len = self.longest_str - key.len();
+            let mut spacer_string: String = String::new();
+            for _ in 0..spacer_len {
+                spacer_string.push_str(" ")
+            }
+            println!("    {key}: {spacer_string}{value}");
         }
     }
-    pub fn list_output_aliases(&self) {
-        println!("Output aliases:");
+    pub fn list_output_aliases(&mut self) {
+        if self.longest_str == 0 {
+            self.longest_input_output_key();
+        }
+
+        println!("  Output aliases:");
         for (key, value) in self.output_aliases.iter() {
-            println!("  {}: {}", key, value);
+            let spacer_len = self.longest_str - key.len();
+            let mut spacer_string: String = String::new();
+            for _ in 0..spacer_len {
+                spacer_string.push_str(" ")
+            }
+            println!("    {key}: {spacer_string}{value}");
         }
     }
 

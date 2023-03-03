@@ -54,9 +54,15 @@ impl Opt {
                     .expect("Error sending command to HDMI switch");
             }
             Some(SubCommand::Ls {}) => {
+                println!("Aliases:");
                 switch.list_input_aliases();
-                switch.list_input_defaults();
+                println!();
                 switch.list_output_aliases();
+                println!();
+                println!();
+                println!("Defaults:");
+                switch.list_input_defaults();
+                println!();
                 switch.list_output_defaults();
             }
             None => {
