@@ -1,4 +1,20 @@
 use indexmap::IndexMap;
+use anyhow::{Result, anyhow};
+
+type HdmiIn<'a> = &'a str;
+
+pub const HDMIIN1: HdmiIn = "hdmiin1";
+pub const HDMIIN2: HdmiIn = "hdmiin2";
+pub const HDMIIN3: HdmiIn = "hdmiin3";
+pub const HDMIIN4: HdmiIn = "hdmiin4";
+
+type HdmiOut<'a> = &'a str;
+
+pub const HDMIOUT1: HdmiOut = "hdmiout1";
+pub const HDMIOUT2: HdmiOut = "hdmiout2";
+pub const HDMIOUT3: HdmiOut = "hdmiout3";
+pub const HDMIOUT4: HdmiOut = "hdmiout4";
+pub const HDMIOUTALL: HdmiOut = "all";
 
 pub struct Switch {
     input_defaults: IndexMap<String, String>,
@@ -14,19 +30,18 @@ impl Switch {
     pub fn new() -> Self {
         let switch = Switch {
             input_defaults: IndexMap::from([
-                ("hdmiin1".to_string(), "hdmiin1".to_string()),
-                ("hdmiin2".to_string(), "hdmiin2".to_string()),
-                ("hdmiin3".to_string(), "hdmiin3".to_string()),
-                ("hdmiin4".to_string(), "hdmiin4".to_string()),
-                ("all".to_string(), "all".to_string()),
+                (HDMIIN1.to_string(), HDMIIN1.to_string()),
+                (HDMIIN2.to_string(), HDMIIN2.to_string()),
+                (HDMIIN3.to_string(), HDMIIN3.to_string()),
+                (HDMIIN4.to_string(), HDMIIN4.to_string()),
             ]),
             input_aliases: IndexMap::new(),
             output_defaults: IndexMap::from([
-                ("hdmiout1".to_string(), "hdmiout1".to_string()),
-                ("hdmiout2".to_string(), "hdmiout2".to_string()),
-                ("hdmiout3".to_string(), "hdmiout3".to_string()),
-                ("hdmiout4".to_string(), "hdmiout4".to_string()),
-                ("all".to_string(), "all".to_string()),
+                (HDMIOUT1.to_string(), HDMIOUT1.to_string()),
+                (HDMIOUT2.to_string(), HDMIOUT2.to_string()),
+                (HDMIOUT3.to_string(), HDMIOUT3.to_string()),
+                (HDMIOUT4.to_string(), HDMIOUT4.to_string()),
+                (HDMIOUTALL.to_string(), HDMIOUTALL.to_string()),
             ]),
             output_aliases: IndexMap::new(),
             longest_str: 0,
@@ -123,7 +138,7 @@ impl Switch {
         }
     }
 
-    pub fn load_input_alias(&mut self, alias: &str, default: &str) -> Result<(), String> {
+    pub fn load_input_alias(&mut self, alias: &str, default: &str) -> Result<()> {
         match is_valid_input(default) {
             true => {
                 self.input_aliases
@@ -131,12 +146,12 @@ impl Switch {
                 return Ok(());
             }
             false => {
-                return Err(format!("Input {} is not a supported input.", default));
+                return Err(anyhow!("Loading aliases: Input {} is not a supported input.", default));
             }
         };
     }
 
-    pub fn load_output_alias(&mut self, alias: &str, default: &str) -> Result<(), String> {
+    pub fn load_output_alias(&mut self, alias: &str, default: &str) -> Result<()> {
         match is_valid_output(default) {
             true => {
                 self.output_aliases
@@ -144,11 +159,11 @@ impl Switch {
                 return Ok(());
             }
             false => {
-                return Err(format!("Output {} is not a supported output.", default));
+                return Err(anyhow!("Loading aliases: Output {} is not a supported output.", default));
             }
         };
     }
-    pub fn command_build(self, input: &str, output: &str) -> Result<String, String> {
+    pub fn command_build(self, input: &str, output: &str) -> Result<String> {
         let mut inputs: IndexMap<String, String> = IndexMap::new();
         let mut outputs: IndexMap<String, String> = IndexMap::new();
 
@@ -158,7 +173,7 @@ impl Switch {
         let input = match inputs.get(input) {
             Some(value) => value,
             _ => {
-                return Err(format!("Input {} not supported", input));
+                return Err(anyhow!("Input {} not supported", input));
             }
         };
 
@@ -168,7 +183,7 @@ impl Switch {
         let output = match outputs.get(output) {
             Some(value) => value,
             _ => {
-                return Err(format!("Output {} not supported", output));
+                return Err(anyhow!("Output {} not supported", output));
             }
         };
 
@@ -179,22 +194,36 @@ impl Switch {
 
 // NOTE: should this return an error?
 fn is_valid_input(input: &str) -> bool {
+    match to_hdmi_in(input) {
+        Ok(_) => return true,
+        Err(_) => return false,
+    }
+}
+
+pub fn to_hdmi_in(input: &str) -> Result<HdmiIn> {
     match input {
-        "hdmiin1" => return true,
-        "hdmiin2" => return true,
-        "hdmiin3" => return true,
-        "hdmiin4" => return true,
-        _v => return false,
+        HDMIIN1 => return Ok(HDMIIN1),
+        HDMIIN2 => return Ok(HDMIIN2),
+        HDMIIN3 => return Ok(HDMIIN3),
+        HDMIIN4 => return Ok(HDMIIN4),
+        _v => return Err(anyhow!("{} is not a supported HDMI input", input)),
     }
 }
 
 // NOTE: should this return an error?
 fn is_valid_output(output: &str) -> bool {
+    match to_hdmi_out(output) {
+        Ok(_) => return true,
+        Err(_) => return false,
+    }
+}
+
+pub fn to_hdmi_out(output: &str) -> Result<HdmiOut> {
     match output {
-        "hdmiout1" => return true,
-        "hdmiout2" => return true,
-        "hdmiout3" => return true,
-        "hdmiout4" => return true,
-        _v => return false,
+        HDMIOUT1 => return Ok(HDMIOUT1),
+        HDMIOUT2 => return Ok(HDMIOUT2),
+        HDMIOUT3 => return Ok(HDMIOUT3),
+        HDMIOUT4 => return Ok(HDMIOUT4),
+        _v => return Err(anyhow!("{} is not a suppported HDMI output", output)),
     }
 }

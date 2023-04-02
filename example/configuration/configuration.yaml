@@ -1,6 +1,9 @@
 server:
   # Host name may also be a FQDN. IPv6 IP addresses have not been tested, but
   # they do not appear to be supported by the HDMI switch either.
+  #
+  # host: "example.com"
+  # or
   host: "10.10.10.10"
 input:
   # Aliases can be arbitrary. If an alias is duplicated it will use the last one

@@ -5,6 +5,7 @@ use std::env;
 use std::error::Error;
 use structopt::StructOpt;
 use telnet::Telnet;
+use anyhow::{Result, anyhow};
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hdmi-switch", about = "Cli client for 4KMX44-H2")]
@@ -27,7 +28,7 @@ impl Opt {
         return Ok(configuration);
     }
 
-    fn execute(self, configuration: configuration::Configuration) -> Result<(), String> {
+    fn execute(self, configuration: configuration::Configuration) -> Result<()> {
         let port = configuration.get_port();
 
         let mut telnet = Telnet::connect((configuration.server.host, port), 256)
@@ -47,7 +48,10 @@ impl Opt {
 
         match self.cmd {
             Some(SubCommand::Switch(switch_opts)) => {
-                let buffer: String = switch.command_build(&switch_opts.input, &switch_opts.output)?;
+                let buffer: String = switch.command_build(
+                    &switch_opts.input, 
+                    &switch_opts.output,
+                )?;
 
                 telnet
                     .write(&buffer.as_bytes())
@@ -66,7 +70,7 @@ impl Opt {
                 switch.list_output_defaults();
             }
             None => {
-                return Err("No subcommand found. Please use -h for available subcommands".to_string());
+                return Err(anyhow!("No subcommand found. Please use -h for available subcommands"));
             }
         }
         return Ok(());
